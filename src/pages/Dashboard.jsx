@@ -8,33 +8,20 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
-const RISK_COLORS = { Low:'#34d399', Moderate:'#fbbf24', High:'#f97316', 'Very High':'#f43f5e' };
-const DISEASE_COLORS = ['#4f72cd','#f43f5e','#f59e0b','#8b5cf6','#06b6d4','#10b981','#ec4899','#6366f1'];
+const RISK_COLORS = { Low:'#48bb78', Moderate:'#ecc94b', High:'#ed8936', 'Very High':'#fc8181' };
+const DISEASE_COLORS = ['#06b6d4','#f85149','#d29922','#bc8cff','#ff6b6b','#58a6ff','#3fb950','#79c0ff'];
 
-function StatCard({ icon: Icon, label, value, sub, gradient, onClick }) {
+function StatCard({ icon: Icon, label, value, sub, color, onClick }) {
   return (
-    <div onClick={onClick}
-      className={`rounded-2xl p-5 transition-all duration-200 ${onClick ? 'cursor-pointer' : ''}`}
-      style={{
-        background: gradient || 'linear-gradient(145deg,#ffffff,#f8faff)',
-        border: '1px solid rgba(196,213,240,0.6)',
-        boxShadow: '0 1px 3px rgba(15,23,42,0.05), 0 8px 24px rgba(79,114,205,0.07)',
-      }}
-      onMouseEnter={e => e.currentTarget.style.boxShadow='0 4px 20px rgba(79,114,205,0.14),0 1px 4px rgba(15,23,42,0.08)'}
-      onMouseLeave={e => e.currentTarget.style.boxShadow='0 1px 3px rgba(15,23,42,0.05),0 8px 24px rgba(79,114,205,0.07)'}>
+    <div onClick={onClick} className={`bg-white border border-slate-200 rounded-xl shadow-sm p-5 hover:border-blue-400 hover:shadow-md transition-all ${onClick?'cursor-pointer':''}`}>
       <div className="flex items-start justify-between mb-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background:'linear-gradient(135deg,#4f72cd,#0891b2)', boxShadow:'0 4px 10px rgba(79,114,205,0.25)'}}>
-          <Icon size={19} className="text-white" />
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
+          <Icon size={20} className="text-white" />
         </div>
-        {sub && (
-          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
-            style={{background:'rgba(52,211,153,0.12)', color:'#059669', border:'1px solid rgba(52,211,153,0.25)', fontFamily:'DM Sans,sans-serif'}}>
-            {sub}
-          </span>
-        )}
+        {sub && <span className="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full">{sub}</span>}
       </div>
-      <div className="text-2xl font-bold text-slate-800" style={{fontFamily:'Plus Jakarta Sans,sans-serif'}}>{value ?? '—'}</div>
-      <div className="text-xs text-slate-400 mt-1 font-medium" style={{fontFamily:'DM Sans,sans-serif'}}>{label}</div>
+      <div className="text-2xl font-bold text-slate-800">{value ?? '—'}</div>
+      <div className="text-xs text-slate-400 mt-1">{label}</div>
     </div>
   );
 }
@@ -42,26 +29,15 @@ function StatCard({ icon: Icon, label, value, sub, gradient, onClick }) {
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl px-3 py-2.5 text-xs"
-      style={{background:'linear-gradient(145deg,#ffffff,#f4f8ff)', border:'1px solid rgba(196,213,240,0.7)', boxShadow:'0 8px 24px rgba(79,114,205,0.15)'}}>
-      <p className="text-slate-500 mb-1.5 font-medium" style={{fontFamily:'DM Sans,sans-serif'}}>{label}</p>
-      {payload.map((p,i) => (
-        <p key={i} style={{color:p.color, fontFamily:'DM Sans,sans-serif'}} className="font-semibold">
-          {p.name}: {typeof p.value === 'number' ? p.value.toFixed(1) : p.value}
-        </p>
-      ))}
+    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs">
+      <p className="text-slate-400 mb-1">{label}</p>
+      {payload.map((p,i) => <p key={i} style={{color:p.color}}>{p.name}: {typeof p.value === 'number' ? p.value.toFixed(1) : p.value}</p>)}
     </div>
   );
 };
 
-const cardStyle = {
-  background: 'linear-gradient(145deg,#ffffff,#f8faff)',
-  border: '1px solid rgba(196,213,240,0.6)',
-  boxShadow: '0 1px 3px rgba(15,23,42,0.05),0 8px 24px rgba(79,114,205,0.07)',
-};
-
 export default function Dashboard() {
-  const [data, setData] = useState(null);
+  const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -74,135 +50,178 @@ export default function Dashboard() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-full">
-      <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{borderColor:'#4f72cd', borderTopColor:'transparent'}}/>
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm text-slate-400">Loading dashboard…</span>
+      </div>
     </div>
   );
 
   const stats = data?.stats || {};
-  const riskDist = data?.risk_distribution || [];
-  const diseaseDist = data?.disease_distribution || [];
-  const riskTrend = data?.risk_trend || [];
-  const recentPats = data?.recent_patients || [];
+  const monthly  = (data?.monthly || []).reverse();
+  const byDisease = data?.byDisease || [];
+  const highRisk  = data?.highRisk  || [];
+  const recentLogs= data?.recentLogs|| [];
+  const statusDist= data?.statusDist|| [];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800" style={{fontFamily:'Plus Jakarta Sans,sans-serif', letterSpacing:'-0.02em'}}>Dashboard</h1>
-        <p className="text-sm text-slate-400 mt-0.5" style={{fontFamily:'DM Sans,sans-serif'}}>Clinical overview & AI insights</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Clinical Dashboard</h1>
+          <p className="text-sm text-slate-400 mt-1">NeuroQ AI · Real-time neural diagnostics</p>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-xl">
+          <Zap size={14} className="text-blue-600 animate-pulse" />
+          <span className="text-sm text-blue-600 font-medium">Quantum Engine Active</span>
+        </div>
       </div>
 
-      {/* Stat Cards */}
+      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Users}         label="Total Patients"     value={stats.total_patients}   sub={stats.new_this_month ? `+${stats.new_this_month} this month` : null} onClick={() => navigate('/patients')} />
-        <StatCard icon={AlertTriangle} label="Critical Patients"  value={stats.critical_patients} />
-        <StatCard icon={Brain}         label="AI Predictions"     value={stats.total_predictions} />
-        <StatCard icon={Calendar}      label="Today's Appointments" value={stats.today_appointments} onClick={() => navigate('/appointments')} />
+        <StatCard icon={Users}         label="Total Patients"    value={stats.total_patients}       color="bg-blue-600"   onClick={()=>navigate('/patients')} />
+        <StatCard icon={AlertTriangle} label="Critical Patients" value={stats.critical_patients}    color="bg-red-500"    sub="⚠ Alert" onClick={()=>navigate('/patients?status=critical')} />
+        <StatCard icon={Brain}         label="High Risk (≥70%)"  value={stats.high_risk_count}      color="bg-orange-500" />
+        <StatCard icon={Calendar}      label="Upcoming Appts"    value={stats.upcoming_appointments} color="bg-purple-500" onClick={()=>navigate('/appointments')} />
       </div>
 
-      {/* Charts Row */}
+      {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Risk Trend */}
-        <div className="lg:col-span-2 rounded-2xl p-5" style={cardStyle}>
-          <div className="mb-4">
-            <h2 className="text-sm font-semibold text-slate-700" style={{fontFamily:'Plus Jakarta Sans,sans-serif'}}>Risk Score Trend</h2>
-            <p className="text-xs text-slate-400 mt-0.5" style={{fontFamily:'DM Sans,sans-serif'}}>Average risk over time</p>
-          </div>
+        {/* Monthly trend */}
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl shadow-sm p-5">
+          <h3 className="text-sm font-semibold text-slate-400 mb-4 flex items-center gap-2">
+            <TrendingUp size={16} className="text-blue-600" /> Monthly Prediction Trends
+          </h3>
           <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={riskTrend}>
+            <AreaChart data={monthly}>
               <defs>
-                <linearGradient id="riskGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#4f72cd" stopOpacity={0.18}/>
-                  <stop offset="95%" stopColor="#4f72cd" stopOpacity={0}/>
+                <linearGradient id="gradCount" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="gradRisk" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f85149" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#f85149" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="month" tick={{fontSize:11, fill:'#94a3b8', fontFamily:'DM Sans,sans-serif'}} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fontSize:11, fill:'#94a3b8', fontFamily:'DM Sans,sans-serif'}} axisLine={false} tickLine={false}/>
-              <Tooltip content={<CustomTooltip />}/>
-              <Area type="monotone" dataKey="avg_risk" stroke="#4f72cd" strokeWidth={2.5} fill="url(#riskGrad)" name="Avg Risk"/>
+              <XAxis dataKey="month" tick={{fill:'#64748b',fontSize:10}} />
+              <YAxis tick={{fill:'#64748b',fontSize:10}} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{fontSize:'11px'}} />
+              <Area type="monotone" dataKey="count" name="Predictions" stroke="#06b6d4" fill="url(#gradCount)" strokeWidth={2} />
+              <Area type="monotone" dataKey="avg_risk" name="Avg Risk %" stroke="#f85149" fill="url(#gradRisk)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Risk Distribution Pie */}
-        <div className="rounded-2xl p-5" style={cardStyle}>
-          <div className="mb-4">
-            <h2 className="text-sm font-semibold text-slate-700" style={{fontFamily:'Plus Jakarta Sans,sans-serif'}}>Risk Distribution</h2>
-            <p className="text-xs text-slate-400 mt-0.5" style={{fontFamily:'DM Sans,sans-serif'}}>Patient risk levels</p>
-          </div>
+        {/* Disease distribution */}
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5">
+          <h3 className="text-sm font-semibold text-slate-400 mb-4">Disease Distribution</h3>
           <ResponsiveContainer width="100%" height={160}>
             <PieChart>
-              <Pie data={riskDist} dataKey="count" nameKey="risk_label" cx="50%" cy="50%" outerRadius={65} innerRadius={35} paddingAngle={3}>
-                {riskDist.map((e,i) => <Cell key={i} fill={RISK_COLORS[e.risk_label] || '#94a3b8'}/>)}
+              <Pie data={byDisease} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={65} innerRadius={35}>
+                {byDisease.map((_, i) => (
+                  <Cell key={i} fill={DISEASE_COLORS[i % DISEASE_COLORS.length]} />
+                ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />}/>
+              <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="mt-2 space-y-1">
-            {riskDist.map((r,i) => (
-              <div key={i} className="flex items-center justify-between text-xs" style={{fontFamily:'DM Sans,sans-serif'}}>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full" style={{background: RISK_COLORS[r.risk_label]||'#94a3b8'}}/>
-                  <span className="text-slate-500">{r.risk_label}</span>
+          <div className="space-y-1.5 mt-2">
+            {byDisease.slice(0,4).map((d,i)=>(
+              <div key={i} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{background:DISEASE_COLORS[i]}}/>
+                  <span className="text-slate-400">{d.name}</span>
                 </div>
-                <span className="font-semibold text-slate-700">{r.count}</span>
+                <span className="text-slate-400 font-medium">{d.count}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Disease Distribution Bar */}
-      <div className="rounded-2xl p-5" style={cardStyle}>
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold text-slate-700" style={{fontFamily:'Plus Jakarta Sans,sans-serif'}}>Disease Distribution</h2>
-          <p className="text-xs text-slate-400 mt-0.5" style={{fontFamily:'DM Sans,sans-serif'}}>Patient count by condition</p>
+      {/* Bottom row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* High risk patients */}
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-400 flex items-center gap-2">
+              <AlertTriangle size={16} className="text-red-400" /> High Risk Patients
+            </h3>
+            <button onClick={()=>navigate('/patients')} className="text-xs text-blue-600 hover:text-cyan-300 flex items-center gap-1">
+              View all <ArrowRight size={12}/>
+            </button>
+          </div>
+          <div className="space-y-3">
+            {highRisk.map((p,i)=>(
+              <div key={i} onClick={()=>navigate(`/patients`)}
+                className="flex items-center justify-between p-3 rounded-lg bg-white/2 hover:bg-slate-100 cursor-pointer transition-all border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                    {p.full_name?.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-slate-700">{p.full_name}</div>
+                    <div className="text-xs text-slate-400">{p.patient_code} · {p.disease}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold" style={{color: p.risk_score>=70?'#fc8181':'#ed8936'}}>{p.risk_score}%</div>
+                  <div className="text-xs text-slate-400">{p.risk_label}</div>
+                </div>
+              </div>
+            ))}
+            {highRisk.length === 0 && <div className="text-center py-4 text-sm text-slate-400">No high risk patients</div>}
+          </div>
         </div>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={diseaseDist} barSize={28}>
-            <XAxis dataKey="disease_name" tick={{fontSize:11, fill:'#94a3b8', fontFamily:'DM Sans,sans-serif'}} axisLine={false} tickLine={false}/>
-            <YAxis tick={{fontSize:11, fill:'#94a3b8', fontFamily:'DM Sans,sans-serif'}} axisLine={false} tickLine={false}/>
-            <Tooltip content={<CustomTooltip />}/>
-            <Bar dataKey="count" name="Patients" radius={[6,6,0,0]}>
-              {diseaseDist.map((_,i) => <Cell key={i} fill={DISEASE_COLORS[i % DISEASE_COLORS.length]}/>)}
+
+        {/* Recent activity */}
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-400 flex items-center gap-2">
+              <Activity size={16} className="text-blue-600" /> Recent Activity
+            </h3>
+            <button onClick={()=>navigate('/logs')} className="text-xs text-blue-600 hover:text-cyan-300 flex items-center gap-1">
+              View logs <ArrowRight size={12}/>
+            </button>
+          </div>
+          <div className="space-y-2">
+            {recentLogs.map((l,i) => {
+              const colors = { LOGIN:'text-green-400', AI_PREDICTION:'text-purple-400', PATIENT_ADDED:'text-blue-600', PATIENT_DELETED:'text-red-400', REPORT_GENERATED:'text-yellow-400' };
+              return (
+                <div key={i} className="flex items-start gap-3 py-2 border-b border-white/5 last:border-0">
+                  <div className={`text-xs font-mono font-medium ${colors[l.action_type]||'text-slate-400'} mt-0.5 flex-shrink-0`}>
+                    {l.action_type?.replace(/_/g,' ')}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-slate-400 truncate">{l.details}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{l.full_name} · {new Date(l.created_at).toLocaleString('en-IN',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'})}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Patient status bar chart */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5">
+        <h3 className="text-sm font-semibold text-slate-400 mb-4">Patient Status Distribution</h3>
+        <ResponsiveContainer width="100%" height={120}>
+          <BarChart data={statusDist} layout="vertical">
+            <XAxis type="number" tick={{fill:'#64748b',fontSize:10}} />
+            <YAxis dataKey="status" type="category" tick={{fill:'#64748b',fontSize:11}} width={80} />
+            <Tooltip content={<CustomTooltip/>} />
+            <Bar dataKey="count" name="Patients" radius={[0,4,4,0]}>
+              {statusDist.map((s,i)=>(
+                <Cell key={i} fill={s.status==='critical'?'#f85149':s.status==='monitoring'?'#d29922':s.status==='active'?'#3fb950':'#64748b'}/>
+              ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
-
-      {/* Recent Patients */}
-      {recentPats.length > 0 && (
-        <div className="rounded-2xl overflow-hidden" style={cardStyle}>
-          <div className="px-5 py-4 flex items-center justify-between" style={{borderBottom:'1px solid rgba(196,213,240,0.5)'}}>
-            <div>
-              <h2 className="text-sm font-semibold text-slate-700" style={{fontFamily:'Plus Jakarta Sans,sans-serif'}}>Recent Patients</h2>
-              <p className="text-xs text-slate-400 mt-0.5" style={{fontFamily:'DM Sans,sans-serif'}}>Latest registrations</p>
-            </div>
-            <button onClick={()=>navigate('/patients')}
-              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-              style={{fontFamily:'DM Sans,sans-serif'}}>
-              View all <ArrowRight size={13}/>
-            </button>
-          </div>
-          <div className="divide-y" style={{borderColor:'rgba(196,213,240,0.4)'}}>
-            {recentPats.map(p => (
-              <div key={p.id} className="px-5 py-3 flex items-center gap-4 hover:bg-blue-50/30 cursor-pointer transition-colors"
-                onClick={()=>navigate(`/patients/${p.id}`)}>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                  style={{background:'linear-gradient(135deg,#4f72cd,#0891b2)'}}>
-                  {p.full_name?.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-slate-700 truncate" style={{fontFamily:'Plus Jakarta Sans,sans-serif'}}>{p.full_name}</div>
-                  <div className="text-xs text-slate-400 font-mono" style={{fontFamily:'DM Sans,sans-serif'}}>{p.patient_code}</div>
-                </div>
-                <div className="text-xs text-slate-400" style={{fontFamily:'DM Sans,sans-serif'}}>{p.age}y · {p.gender}</div>
-                <ArrowRight size={13} className="text-slate-300"/>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
