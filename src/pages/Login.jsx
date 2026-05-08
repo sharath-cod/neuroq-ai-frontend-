@@ -2,140 +2,123 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Brain, Eye, EyeOff, Activity } from 'lucide-react';
+import { Brain, Eye, EyeOff, Zap, Shield, Activity } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Login() {
-  const [form, setForm]       = useState({ username:'', password:'' });
-  const [showPw, setShowPw]   = useState(false);
-  const [error, setError]     = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login }             = useAuth();
-  const navigate              = useNavigate();
+  const { login, loading } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail]       = useState('dr_sharma@neuroqai.local');
+  const [password, setPassword] = useState('doctor123');
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError]       = useState('');
 
-  const handleSubmit = async e => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setError(''); setLoading(true);
-    try {
-      await login(form.username, form.password);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid credentials');
-    } finally { setLoading(false); }
-  };
+    setError('');
+    const result = await login(email, password);
+    if (result.success) { toast.success('Welcome back!'); navigate('/dashboard'); }
+    else setError(result.error);
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-      style={{background:'linear-gradient(135deg,#eef2ff 0%,#f0f7ff 40%,#f5f0ff 80%,#f0f7ff 100%)'}}>
+    <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-50 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl animate-pulse delay-500" />
+        {/* Grid */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(rgba(6,182,212,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,0.03) 1px,transparent 1px)',
+          backgroundSize: '50px 50px'
+        }}/>
+      </div>
 
-      {/* Decorative blobs */}
-      <div className="absolute top-0 left-0 w-96 h-96 rounded-full opacity-30 pointer-events-none"
-        style={{background:'radial-gradient(circle,rgba(79,114,205,0.18),transparent 70%)', transform:'translate(-30%,-30%)'}}/>
-      <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-20 pointer-events-none"
-        style={{background:'radial-gradient(circle,rgba(99,102,241,0.2),transparent 70%)', transform:'translate(30%,30%)'}}/>
-      <div className="absolute top-1/2 right-10 w-64 h-64 rounded-full opacity-15 pointer-events-none"
-        style={{background:'radial-gradient(circle,rgba(8,145,178,0.2),transparent 70%)'}}/>
-
-      <div className="w-full max-w-sm relative z-10">
-        {/* Card */}
-        <div className="rounded-3xl p-8"
-          style={{
-            background:'linear-gradient(145deg,rgba(255,255,255,0.95),rgba(248,251,255,0.92))',
-            border:'1px solid rgba(196,213,240,0.7)',
-            boxShadow:'0 24px 80px rgba(79,114,205,0.14), 0 1px 4px rgba(15,23,42,0.06)',
-            backdropFilter:'blur(20px)',
-          }}>
-
-          {/* Logo */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-              style={{background:'linear-gradient(135deg,#4f72cd,#0891b2)', boxShadow:'0 8px 24px rgba(79,114,205,0.35)'}}>
-              <Brain size={28} className="text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-slate-800" style={{fontFamily:'Plus Jakarta Sans,sans-serif', letterSpacing:'-0.02em'}}>
-              NeuroQ AI
-            </h1>
-            <p className="text-sm text-slate-400 mt-1" style={{fontFamily:'DM Sans,sans-serif'}}>Neural Diagnostics Platform</p>
+      <div className="w-full max-w-md relative z-10">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 mb-4 shadow-2xl shadow-cyan-500/25">
+            <Brain size={40} className="text-white" />
           </div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            NeuroQ AI
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">Advanced Neural Diagnostics Platform</p>
+        </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Features row */}
+        <div className="flex justify-center gap-6 mb-8">
+          {[{icon: Zap, label:'Quantum AI'},{icon: Shield, label:'Secure'},{icon: Activity, label:'Real-time'}].map(({icon:Icon,label})=>(
+            <div key={label} className="flex flex-col items-center gap-1">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
+                <Icon size={14} className="text-blue-600" />
+              </div>
+              <span className="text-xs text-slate-400">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Card */}
+        <div className="bg-white/90 backdrop-blur-xl border border-blue-200 rounded-2xl p-8 shadow-2xl">
+          <h2 className="text-lg font-semibold text-slate-700 mb-6">Clinical Access Portal</h2>
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5" style={{fontFamily:'DM Sans,sans-serif'}}>Username</label>
+              <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Email</label>
               <input
-                type="text"
-                placeholder="Enter your username"
-                value={form.username}
-                onChange={e => setForm(f => ({...f, username: e.target.value}))}
-                className="w-full rounded-xl px-4 py-3 text-sm text-slate-700 transition-all outline-none"
-                style={{
-                  background:'linear-gradient(145deg,#f8faff,#ffffff)',
-                  border:'1.5px solid rgba(196,213,240,0.8)',
-                  fontFamily:'DM Sans,sans-serif',
-                  boxShadow:'inset 0 1px 3px rgba(79,114,205,0.06)',
-                }}
-                onFocus={e => e.target.style.borderColor='rgba(79,114,205,0.5)'}
-                onBlur={e => e.target.style.borderColor='rgba(196,213,240,0.8)'}
+                type="email" value={email} onChange={e=>setEmail(e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-300 transition-all"
+                placeholder="doctor@neuroqai.local"
+                required
               />
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5" style={{fontFamily:'DM Sans,sans-serif'}}>Password</label>
+              <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Password</label>
               <div className="relative">
                 <input
-                  type={showPw ? 'text' : 'password'}
-                  placeholder="Enter your password"
-                  value={form.password}
-                  onChange={e => setForm(f => ({...f, password: e.target.value}))}
-                  className="w-full rounded-xl px-4 py-3 pr-11 text-sm text-slate-700 transition-all outline-none"
-                  style={{
-                    background:'linear-gradient(145deg,#f8faff,#ffffff)',
-                    border:'1.5px solid rgba(196,213,240,0.8)',
-                    fontFamily:'DM Sans,sans-serif',
-                    boxShadow:'inset 0 1px 3px rgba(79,114,205,0.06)',
-                  }}
-                  onFocus={e => e.target.style.borderColor='rgba(79,114,205,0.5)'}
-                  onBlur={e => e.target.style.borderColor='rgba(196,213,240,0.8)'}
+                  type={showPass ? 'text' : 'password'} value={password} onChange={e=>setPassword(e.target.value)}
+                  className="w-full bg-[#f0f4f8] border border-slate-300 rounded-xl px-4 py-3 pr-10 text-sm text-slate-700 placeholder-slate-600 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-300 transition-all"
+                  placeholder="••••••••"
+                  required
                 />
-                <button type="button" onClick={() => setShowPw(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                  {showPw ? <EyeOff size={16}/> : <Eye size={16}/>}
+                <button type="button" onClick={()=>setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-400">
+                  {showPass ? <EyeOff size={16}/> : <Eye size={16}/>}
                 </button>
               </div>
             </div>
-
-            {error && (
-              <div className="rounded-xl px-4 py-3 text-sm text-red-600 font-medium"
-                style={{background:'rgba(244,63,94,0.07)', border:'1px solid rgba(244,63,94,0.2)', fontFamily:'DM Sans,sans-serif'}}>
-                {error}
-              </div>
-            )}
-
             <button type="submit" disabled={loading}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all mt-2 disabled:opacity-60"
-              style={{
-                background:'linear-gradient(135deg,#4f72cd,#0891b2)',
-                boxShadow:'0 4px 16px rgba(79,114,205,0.35)',
-                fontFamily:'Plus Jakarta Sans,sans-serif',
-                letterSpacing:'0.01em',
-              }}
-              onMouseEnter={e => !loading && (e.target.style.boxShadow='0 6px 24px rgba(79,114,205,0.5)')}
-              onMouseLeave={e => e.target.style.boxShadow='0 4px 16px rgba(79,114,205,0.35)'}>
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                  Signing in…
-                </span>
-              ) : 'Sign In'}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold text-sm hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40">
+              {loading ? 'Authenticating…' : 'Access Platform'}
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-6 pt-5 flex items-center justify-center gap-2"
-            style={{borderTop:'1px solid rgba(196,213,240,0.5)'}}>
-            <Activity size={12} className="text-slate-300"/>
-            <span className="text-xs text-slate-400" style={{fontFamily:'DM Sans,sans-serif'}}>NeuroQ AI · Clinical Intelligence</span>
+          <div className="mt-6 pt-5 border-t border-slate-200">
+            <p className="text-xs text-slate-400 mb-3">Demo credentials:</p>
+            <div className="space-y-2">
+              {[
+                {role:'Admin',    email:'admin@neuroqai.local',      pass:'admin123'},
+                {role:'Doctor',   email:'sharma@neuroqai.local',     pass:'doctor123'},
+                {role:'Doctor 2', email:'rao@neuroqai.local',        pass:'doctor123'},
+              ].map(c=>(
+                <button key={c.role} onClick={()=>{setEmail(c.email);setPassword(c.pass);}}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 hover:bg-white/6 border border-white/5 text-xs transition-all">
+                  <span className="text-slate-400 font-medium">{c.role}</span>
+                  <span className="text-slate-400 font-mono">{c.email}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+
+        <p className="text-center text-xs text-slate-400 mt-6">
+          NeuroQ AI v2.0 · Final Year Project · {new Date().getFullYear()}
+        </p>
       </div>
     </div>
   );
