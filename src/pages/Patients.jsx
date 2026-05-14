@@ -13,6 +13,7 @@ export default function Patients() {
   const [total,    setTotal]    = useState(0);
   const [pages,    setPages]    = useState(1);
   const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState(null);   // ← NEW: track errors
   const [search,   setSearch]   = useState('');
   const [status,   setStatus]   = useState('');
   const [page,     setPage]     = useState(1);
@@ -20,6 +21,7 @@ export default function Patients() {
 
   const fetchPatients = useCallback(async () => {
     setLoading(true);
+    setError(null);   // clear previous error
     try {
       const params = new URLSearchParams({ page, limit:10 });
       if (search) params.set('search', search);
@@ -28,7 +30,12 @@ export default function Patients() {
       setPatients(res.data.patients);
       setTotal(res.data.total);
       setPages(res.data.pages);
-    } catch (e) { toast.error('Failed to load patients'); }
+    } catch (e) {
+      const msg = e.response?.data?.error || e.message || 'Failed to load patients';
+      setError(msg);
+      toast.error(msg);
+      console.error('Patients fetch error:', e);
+    }
     finally { setLoading(false); }
   }, [page, search, status]);
 
@@ -98,7 +105,16 @@ export default function Patients() {
                   </div>
                 </td></tr>
               )}
-              {!loading && patients.length === 0 && (
+              {!loading && error && (
+                <tr><td colSpan={7} className="py-12 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="text-red-400 text-sm font-medium">⚠ Failed to load patients</div>
+                    <div className="text-xs text-slate-500 font-mono bg-slate-800 px-3 py-1.5 rounded max-w-md break-all">{error}</div>
+                    <button onClick={fetchPatients} className="text-xs text-cyan-400 hover:text-cyan-300 underline">Retry</button>
+                  </div>
+                </td></tr>
+              )}
+              {!loading && !error && patients.length === 0 && (
                 <tr><td colSpan={7} className="py-12 text-center text-sm text-slate-500">No patients found</td></tr>
               )}
               {!loading && patients.map(p => (
